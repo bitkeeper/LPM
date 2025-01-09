@@ -333,7 +333,8 @@ def main() -> None:
                 except:
                     cprint('Error while attempting to uninstall package(s).', 'yellow')
                     return
-                syncPackages(getAllDependencies(packages))
+                #FIX: you can't get deps of packages that are already uninstalled in the previous step(will throw an expection) ? so unclear why statement below is present
+                # syncPackages(getAllDependencies(packages))
                 cprint('Operation completed successfully.', 'green')
             else:
                 print(colored('Please provide the name of at least one package.', 'yellow'))
