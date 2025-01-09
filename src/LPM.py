@@ -50,6 +50,7 @@ def main() -> None:
     parser.add_argument('-src', '--source', action='store_true', help='Use source code for libraries instead of binaries')
     parser.add_argument('-nc', '--nocolor', action='store_true', help='Dont color the output - to avoid dependency on termcolor')
     parser.add_argument('-t', '--token', type=str, help='Personal Access Token required for silent login')
+    parser.add_argument('-S', '--scope', type=str, help='Applied scope to select differen registry', default='@loupeteam')
     parser.add_argument('-v', '--version', action='version', version='%(prog)s: ' + __version__)
     args = parser.parse_args()
 
@@ -63,22 +64,29 @@ def main() -> None:
         def cprint(text: str, color: str|None) -> None:
             print(text)
 
-    # Prepend the @loupeteam prefix to all package names, and split any @version suffixes off into separate struct.
+    # Prepend the scope  prefix to all package names without scope, and split any @version suffixes off into separate struct.
     packages = []
     packageVersions = []
     if(args.packages):   
         for item in args.packages:
+            package_scope: str = args.scope
             # Force package name to lowercase, by convention
-            item = item.lower()
+            package_name: str = item.lower()
+            package_version: str = ''
+
+            # Scope present in package name
+            if package_name[0] == '@':
+                package_scope = package_name.split('/')[0]
+                package_name = package_name.split('/')[1]
+
             # If the @ character is present, it means there's a version specifier.
-            if('@' in item):
-                splitItem = item.split('@')
-                packages.append('@loupeteam/' + splitItem[0])
-                packageVersions.append(splitItem[1])
-            # Othersie, version string is empty.
-            else:
-                packages.append('@loupeteam/' + item)
-                packageVersions.append('')
+            if '@' in package_name:
+                splitItem = package_name.split('@')
+                package_name = splitItem[0]
+                package_version = splitItem[1]
+
+            packages.append(f'{package_scope}/{package_name}')
+            packageVersions.append(package_version)
 
     # Authenticate with a custom personal access token. 
     if(args.cmd == 'login'):
@@ -358,8 +366,8 @@ def main() -> None:
         elif(args.cmd == 'publish'):
             # Introspect the package.json to verify that the package name has the right scope prefix (i.e. @loupeteam). 
             data = getPackageManifestData('package.json')
-            if data['name'].find('@loupeteam') != 0:
-                cprint('Error: the package name must include the @loupeteam scope prefix.', 'yellow')
+            if data['name'].find(args.scope) != 0:
+                cprint('Error: the package name must include the '+args.scope+' scope prefix.', 'yellow')
             else:
                 try:
                     # Introspect the package.json to verify that the 'repository' field is present. 
