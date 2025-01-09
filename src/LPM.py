@@ -910,20 +910,22 @@ def syncPackages(packages):
         elif((packageType == 'program') | (packageType == 'package')):
             destination = getPackageDestination(packageManifest)
             # Find the module(s) in node_modules, and sync it/them.
-            for module in os.listdir(os.path.join('node_modules', '@loupeteam')):
-                if (os.path.join('@loupeteam', module) == os.path.normpath(package)):
-                    # Get a handle on the folder destination.
-                    destinationPkg = ASTools.Package(destination)
-                    # Create a list of filtered objects that don't get copied over.
-                    filter = ['package.pkg', 'license', 'readme.md', 'package.json', 'changelog.md']
-                    # Loop through all contents in the source directory and copy them over one by one. 
-                    for item in os.listdir(os.path.join('node_modules', '@loupeteam', module)):
-                        if (item.lower() not in filter):
-                            # If the item already exists, delete it.
-                            destinationItem = os.path.join(destination, item)
-                            if os.path.exists(destinationItem):
-                                destinationPkg.removeObject(item)
-                            destinationPkg.addObject(os.path.join('node_modules', package, item))
+            for scope in os.listdir('node_modules'):
+                if scope[0]== '@':
+                    for module in os.listdir(os.path.join('node_modules', scope)):            
+                        if (os.path.join(scope, module) == os.path.normpath(package)):
+                            # Get a handle on the folder destination.
+                            destinationPkg = ASTools.Package(destination)
+                            # Create a list of filtered objects that don't get copied over.
+                            filter = ['package.pkg', 'license', 'readme.md', 'package.json', 'changelog.md']
+                            # Loop through all contents in the source directory and copy them over one by one. 
+                            for item in os.listdir(os.path.join('node_modules', scope, module)):
+                                if (item.lower() not in filter):
+                                    # If the item already exists, delete it.
+                                    destinationItem = os.path.join(destination, item)
+                                    if os.path.exists(destinationItem):
+                                        destinationPkg.removeObject(item)
+                                    destinationPkg.addObject(os.path.join('node_modules', package, item))
 
         elif(packageType == 'library') or (packageType == None):
             packageDestination = getPackageManifestField(packageManifest, ['lpm', 'logical', 'destination'])
@@ -935,15 +937,17 @@ def syncPackages(packages):
             # Now create the packages in this path that doesn't exist.
             createPackageTree(destination)
             # Find the module(s) in node_modules, and sync it/them.
-            for module in os.listdir(os.path.join('node_modules', '@loupeteam')):
-                if (os.path.join('@loupeteam', module) == os.path.normpath(package)):
-                    # Get a handle on the library's parent folder.
-                    parentPkg = ASTools.Package(destination)
-                    # If the library already exists, delete it. 
-                    libraryPath = os.path.join(destination, module)
-                    if os.path.isdir(libraryPath):
-                        parentPkg.removeObject(module)
-                    parentPkg.addObject(os.path.join('node_modules', package))
+            for scope in os.listdir('node_modules'):
+                if scope[0]== '@':
+                    for module in os.listdir(os.path.join('node_modules', scope)):
+                        if (os.path.join(scope, module) == os.path.normpath(package)):
+                            # Get a handle on the library's parent folder.
+                            parentPkg = ASTools.Package(destination)
+                            # If the library already exists, delete it. 
+                            libraryPath = os.path.join(destination, module)
+                            if os.path.isdir(libraryPath):
+                                parentPkg.removeObject(module)
+                            parentPkg.addObject(os.path.join('node_modules', package))
 
 def deployPackages(config, packages):
     # Figure out where the deployment table is for this configuration.
